@@ -10,7 +10,7 @@ def scrap_applicants():
     base_url = 'https://www.linkedin.com/'
     job_url = 'https://www.linkedin.com/my-items/posted-jobs/'
     mail = 'prasanth33460@gmail.com'
-    password = 'prasanthXbezos@1234509876'
+    password = ''
     try:
         login_module = LoginModule(base_url,mail,password)
         driver = login_module.login()
