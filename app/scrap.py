@@ -5,6 +5,7 @@ import csv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC 
 from selenium.webdriver.support.ui import WebDriverWait
+from pymongo import MongoClient
 
 class Scrap:
     def __init__(self,driver, output_dir='output', output_file='scraping_output.csv'):
@@ -12,11 +13,14 @@ class Scrap:
         self.browser = driver
         self.wait = WebDriverWait(self.browser,20)
         
+        self.client = MongoClient('mongodb://172.30.100.76:27017')
+        self.db = self.client["applicants_db"] 
+        self.collection = self.db["scraped_data"]  
+        
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            os.makedirs(output_dir) 
             
         self.output_path = os.path.join(output_dir, output_file)
-
         if not os.path.exists(self.output_path):
             with open(self.output_path, mode='w', newline='', encoding='utf-8') as file:
                 writer = csv.writer(file)
@@ -25,7 +29,17 @@ class Scrap:
     def random_sleep(self):
         sleep_time = random.uniform(1, 5)
         time.sleep(sleep_time)
-                
+    
+    def save_to_mongo(self, data):
+        try:
+            if '_id' in data:
+                del data['_id']
+            print(f"Attempting to save data: {data}")  
+            self.collection.insert_one(data)
+            print(f"Data saved to MongoDB successfully: {data}")
+        except Exception as e:
+            print(f"Error saving data to MongoDB: {e}")
+
     def go_to_next_page(self):
         try:
             pagination_buttons = self.wait.until(EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'artdeco-pagination__indicator--number')]//button")))
@@ -93,15 +107,15 @@ class Scrap:
                         except:
                             phone_number = "Not Available"  
                         
+                        applicant_data = {
+                        "Applicant Name": applicant_name,
+                        "Location": location,
+                        "Email": email,
+                        "Phone Number": phone_number
+                    }
+                        self.save_to_mongo(applicant_data)
                         writer.writerow([applicant_name, location, email, phone_number])
-
-                        print(f"Applicant Number {index}:")
-                        print(f"Name: {applicant_name}")
-                        print(f"Location: {location}")
-                        print(f"Email: {email}")
-                        print(f"Phone Number: {phone_number}")
-                        print("-" * 40)
-                    
+                        print(f"Scraped data saved: {applicant_data}")
                         self.random_sleep()
                     except Exception as e:
                         print(f"An error occurred: {e}")

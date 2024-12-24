@@ -13,6 +13,7 @@ pandas = "^2.2.3"
 fastapi = "^0.115.6"
 uvicorn = "^0.34.0"
 basemodel = "^20190604.1625"
+pymongo = "^4.10.1"
 
 
 [build-system]
